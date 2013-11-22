@@ -22,6 +22,8 @@ class Silver(Card):
 
 class Curse(Card):
     #THIS CARD SHOULDN'T HAVE TO BE PLAYED UNLESS ALL ELSE ARE 
+    #test2 ?
+
     cardtype = CURSE
     cost = (0, 0)
     name = 'Curse'

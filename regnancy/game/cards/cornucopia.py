@@ -232,7 +232,7 @@ class Tournament(Card):
         self.other_revealed = False
 
         player.actions += 1
-        
+
         player_filter=lambda p: [c for c in p.hand if c.name == "Province"]
         p = game.ask_all_players(self, AskYesNo(self, 'Reveal Province?'),
                                    player_filter=player_filter)

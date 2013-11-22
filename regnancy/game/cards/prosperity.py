@@ -247,7 +247,7 @@ class Bishop(Card):
     player.money += 1
     player.score += 1
 
-    p = game.let_all_players_pick(self, 'You may trash a card', player_filter=lambda a: a==game.active_player)
+    p = game.let_all_players_pick(self, 'You may trash a card')
 
     self.pending = len(p)
 
@@ -255,6 +255,16 @@ class Bishop(Card):
     if len(result) > 1:
       game.whisper("You may only trash one card!")
       return False
+
+    if len(result) == 0:
+      if player == game.active_player:
+        game.whisper("You have to trash one card")
+        return False
+      else:
+        return True
+
+    if player == game.active_player:
+      player.score += result[0].cost[0]/2
 
     game.trash_card(player, result[0])
 
@@ -353,3 +363,58 @@ class Talisman(Card):
         if not c.type & VICTORY and c.cost[0] < 4:
           pile = game.get_pile(c)
           game.take_card_from_pile(player, pile, safe=True)
+
+
+class Contraband(Card):
+
+  cardtype = TREASURE
+  cost = (5, 0)
+  name = "Contraband"
+
+  def __init__(self):
+    Card.__init__(self)
+    self.named_card = ''
+
+  def pick_handler(self):
+
+  def buy_step(self, game, player):
+    player.money += 3
+    player.buys += 1
+
+    answers = [c.name for c in game.all_piles]
+
+    player_filter = lambda p: p == game.next_player()
+
+    g = game.ask_all_players(
+
+    def mod(coins, potions, card):
+      if card.name == self.named_card:
+        return (42, 42)
+      else:
+        return (coins, potions)
+
+    game.add_cost_mod(mod)
+
+  def action_step(self, game, player):
+    self.buy_step(game, player)
+
+
+class CountingHouse(Card):
+
+  cardtype = ACTION
+  cost = (5, 0)
+  name = "Counting House"
+
+  def __init__(self):
+    Card.__init__(self)
+
+  def handle_answer(_, ap, result):
+    count = int(result)
+
+  def action_step(self, game, player):
+    coppers = player.discardpile.get_all_of_card_type(Copper)
+    if len(coppers) > 0:
+      answers = [str(i) for i in range(coppers) + 1]
+      game.ask(self, "Take how many coppers into hand?", answers, self.handle_answer)
+    return True
+

@@ -509,7 +509,7 @@ class Bridge(Card):
         player.buys += 1
         player.money += 1
 
-        def mod(coins, potions):
+        def mod(coins, potions, card):
             return (coins - 1, potions)
 
         game.add_cost_mod(mod)

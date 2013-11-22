@@ -203,7 +203,7 @@ class Princess(Card):
     def action_step(self, game, player):
         player.buys += 1
 
-        def mod(coins, potions):
+        def mod(coins, potions, card):
             if self in player.board:
                 return (coins - 2, potions)
 

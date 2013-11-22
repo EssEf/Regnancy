@@ -232,6 +232,7 @@ class Watchtower(Card):
     game.resolved(self)
     return True
 
+
 class Bishop(Card):
 
   cardtype = ACTION
@@ -246,33 +247,24 @@ class Bishop(Card):
     player.money += 1
     player.score += 1
 
-    player.actions += 1
-
-    p = game.ask_all_players(self, AskYesNo(self, 'Trash Card?'))
+    p = game.let_all_players_pick(self, 'You may trash a card', player_filter=lambda a: a==game.active_player)
 
     self.pending = len(p)
 
   def handler(self, game, player, result):
-    if result == "Yes":
-      game.playe
-      if player is game.active_player:
-        game.discard_card(player, (c for c in player.hand if c.name ==
-                          "Province").next())
-        self.province_discarded = True
-      else:
-        self.other_revealed = True
+    if len(result) > 1:
+      game.whisper("You may only trash one card!")
+      return False
 
-      game.yell("%s reveals a Province" % player.name)
+    game.trash_card(player, result[0])
+
     self.pending -= 1
 
     if player is game.active_player:
       if self.pending:
-        return LateCall(lambda p=player, g=game: self.price_handler(g, p))
+        return LateCall(lambda p=player, g=game: True)
       else:
-        self.price_handler(game, player)
-
-    return True
-
+        return True
 
 
 class CountingHouse(Card):
@@ -300,3 +292,64 @@ class CountingHouse(Card):
             game.let_order_cards(self, 'Choose any number of Copper to put on your hand', coppers, take)
         else:
             game.resolved(self)
+
+
+class Monument(Card):
+
+  cardtype = ACTION
+  cost = (4, 0)
+  name = "Monument"
+
+  def __init__(self):
+    Card.__init__(self)
+
+  def action_step(self, game, player):
+    player.score += 1
+    player.money += 2
+
+
+class Quarry(Card):
+
+  cardtype = TREASURE
+  cost = (4, 0)
+  name = "Quarry"
+
+  def __init__(self):
+    Card.__init__(self)
+
+  def buy_step(self, game, player):
+    player.money += 2
+
+    def mod(coins, potions, card):
+      if self in player.board:
+        if card.type & ACTION:
+          return (coins - 2, potions)
+        else:
+          return (coins, potions)
+
+    game.add_cost_mod(mod)
+
+    game.resolved(self)
+
+  def action_step(self, game, player):
+    self.buy_step(game, player)
+
+
+class Talisman(Card):
+
+  cardtype = TREASURE
+  cost = (4, 0)
+  name = "Talisman"
+
+  def __init__(self):
+    Card.__init__(self)
+
+  def buy_step(self, game, player):
+    player.money += 1
+
+  def cleanup_step(self, game, player):
+    if self in player.board:
+      for c in game.last_bought_cards[player]:
+        if not c.type & VICTORY and c.cost[0] < 4:
+          pile = game.get_pile(c)
+          game.take_card_from_pile(player, pile, safe=True)

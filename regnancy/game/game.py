@@ -194,8 +194,12 @@ class Game(object):
 
     def get_cost(self, pile_or_card):
         (coins, potions) = pile_or_card.cost
+        if isinstance(pile_or_card, KingdomPile):
+          card = pile_or_card.card
+        else:
+          card = pile_or_card
         for mod in self.cost_mod:
-            (coins, potions) = mod(coins, potions)
+            (coins, potions) = mod(coins, potions, card)
         return (max(coins, 0), max(potions, 0))
 
     def buy_card(self, player, pile_id):

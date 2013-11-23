@@ -3,7 +3,7 @@
 
 from game.cards.card import Card, ACTION, ATTACK, DURATION, VICTORY
 from game.cards.common import Curse, Copper, Gold
-
+from game.gametrigger import T_ATTACK
 
 class Ghostship(Card):
 
@@ -43,7 +43,7 @@ class Wharf(Card):
     def __init__(self):
         Card.__init__(self)
 
-    def action_step(self, game, player):
+v    def action_step(self, game, player):
         game.draw_card(count=2)
         player.buys += 1
         game.resolved(self)
@@ -399,5 +399,59 @@ class FishingVillage(Card):
     def begin_step(self, game, player):
         player.actions += 1
         player.money += 1
+
+
+class Lighthouse(Card):
+    # I don't know if I'm handling the reaction part of it properly 
+    cardtype = ACTION | DURATION 
+    cost = (2, 0)
+    name = "Lighthouse"
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        player.actions += 1
+        player.money += 1
+        game.resolved(self)
+
+    def handle_trigger(self, trigger):
+        if trigger == T_ATTACK:
+            return True
+
+    def begin_step(self, game, player):
+        player.money += 1
+
+
+class Ambassador(card):
+    # This is broken as hell right now
+    cardtype = ACTION | ATTACK
+    cost = (3, 0)
+    name = "Ambassador"
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.let_pick_from_hand(self, 'Pick a card to reveal')
+        game.attack(self, self.attack_handler, expect_answer=False,
+                    on_restore_callback=self.handler)
+
+    def attack_handler(self, game, attacked_player, result):
+        return True
+
+    def handler(self, game, player, result):
+        if len(result) != 1:
+            game.whisper("You have to choose one card")
+            return False
+
+        def do_ambassador(*args, **kwargs):
+            def handle_answer(,_)
+
+        card = player.hand.get_card(result[0])
+        player.move_card_to_pile(card, player.drawpile)
+        game.yell("%s reveals %s" % player.name, card)
+        game.resolved(self)
+        return True
 
 

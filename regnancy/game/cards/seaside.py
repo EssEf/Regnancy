@@ -495,6 +495,7 @@ class PirateShip(card):
     def handler2(self, game, player):
         gen = [(game.get_player_by_id(pid), (self.revealed)[pid]) for pid in
                self.revealed]
+        trashedCard = False
 
         def do_pirateShip(*args, **kwargs):
             try:
@@ -522,6 +523,7 @@ class PirateShip(card):
                 for card in (card1, card2):
                     if card and card.cardtype & TREASURE:
                         answers.append("Trash " + card.name)
+                        trashedCard = True
                 if not answers:
                     answers.append("Do nothing")
 
@@ -531,3 +533,32 @@ class PirateShip(card):
                 return True
 
         do_pirateShip()
+        if trashedCard:
+            player.pirateShip += 1
+
+def Island(card):
+
+    cardtype = ACTION | VICTORY
+    cost = (4, 0)
+    name = "Island"
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.let_pick_from_hand(self, 'Pick a card to set aside')
+
+    def handler(self, game, player, result):
+        if not player.hand:
+            return True
+        if len(result) != 1:
+            game.whisper("You have to choose one card")
+            return False
+        card = (card for card in player.hand if card.id in result).next()
+        player.move_card_to_pile(self, player.island)
+        player.move_card_to_pile(card, player.island)
+        game.resolved(self)
+        return True
+
+    def end_step(self, game, player):
+        player.score += 2

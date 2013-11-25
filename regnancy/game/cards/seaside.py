@@ -454,6 +454,7 @@ class Ambassador(card):
             while(result > 0):
                 retunCard = player.hand.get_card(copies.next())
                 player.move_card_to_pile(returnCard, game.get_pile(cardType))
+                #remove card from deck?
 
         card = player.hand.get_card(result[0])
         #player.move_card_to_pile(card, player.drawpile)
@@ -466,4 +467,67 @@ class Ambassador(card):
         game.attack(self, self.attack_handler, expect_answer=False)
         return True
 
+class PirateShip(card):
+    
+    cardtype = ACTION | ATTACK
+    cost = (4, 0)
+    name = "Pirate Ship"
 
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.ask(self, "Attack players or gain %i money?" % player.pirateShip,
+                 ["Attack", "+" +str(player.pirateShip) + " money"], handler)
+
+    def attack_handler(self, game, attacked_player, result):
+        (self.revealed)[attacked_player.id] = (game.reveal_top_card(attacked_player),
+                game.reveal_top_card(attacked_player))
+        return True
+
+    def handler(self, game, player, result):
+        if result == "Attack":
+            self.revealed = {}
+            game.attack(self, self.attack_handler, expect_answer=False,
+                        on_restore_callback=self.handler2)
+
+    def handler2(self, game, player):
+        gen = [(game.get_player_by_id(pid), (self.revealed)[pid]) for pid in
+               self.revealed]
+
+        def do_pirateShip(*args, **kwargs):
+            try:
+                (p, (card1, card2)) = gen.pop()
+
+                def handle_answer(_, ap, result):
+                    if result == "Do nothing":
+                        return True
+
+                    (action, cardname) = result.split(' ')
+
+                    card = (c for c in (card1, card2) if c.name ==
+                        cardname).next()
+
+                    if card1 and not card1 is card:
+                        p.discardpile.add(card1)
+                    if card2 and not card2 is card:
+                        p.discardpile.add(card2)
+
+                    if action == 'Trash':
+                        game.trash_card(p, card)
+                    return True
+
+                answers = []
+                for card in (card1, card2):
+                    if card and card.cardtype & TREASURE:
+                        answers.append("Trash " + card.name)
+                if not answers:
+                    answers.append("Do nothing")
+
+                game.ask(self, 'Attack against %s' % p.name, answers,
+                         handle_answer, do_thief)
+            except IndexError:
+                return True
+
+        do_pirateShip()

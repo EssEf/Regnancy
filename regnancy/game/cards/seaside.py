@@ -425,33 +425,44 @@ class Lighthouse(Card):
 
 class Ambassador(card):
     # This is broken as hell right now
+    # I need to write a return to supply function first
     cardtype = ACTION | ATTACK
     cost = (3, 0)
     name = "Ambassador"
+    cardType = None
 
     def __init__(self):
         Card.__init__(self)
 
     def action_step(self, game, player):
         game.let_pick_from_hand(self, 'Pick a card to reveal')
-        game.attack(self, self.attack_handler, expect_answer=False,
-                    on_restore_callback=self.handler)
+        
 
-    def attack_handler(self, game, attacked_player, result):
+    def attack_handler(self, game, attacked_player):
         return True
 
     def handler(self, game, player, result):
+        if not player.hand:
+            return True
         if len(result) != 1:
             game.whisper("You have to choose one card")
             return False
 
-        def do_ambassador(*args, **kwargs):
-            def handle_answer(,_)
+
+        def returnCopies(_, ap, result):
+            while(result > 0):
+                retunCard = player.hand.get_card(copies.next())
+                player.move_card_to_pile(returnCard, cardType)
 
         card = player.hand.get_card(result[0])
-        player.move_card_to_pile(card, player.drawpile)
+        #player.move_card_to_pile(card, player.drawpile)
         game.yell("%s reveals %s" % player.name, card)
-        game.resolved(self)
+        cardType = card.__class__
+        numCopies = len([c for c in player.hand if c.name == card.name])
+        copies = (c for c in player.hand if c.name == card.name)
+        game.ask(self, "Return how many copies?", range(min(3, numCopies+1)),
+                 returnCopies)
+        game.attack(self, self.attack_handler, expect_answer=False)
         return True
 
 

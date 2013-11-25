@@ -424,8 +424,8 @@ class Lighthouse(Card):
 
 
 class Ambassador(card):
-    # This is broken as hell right now
-    # I need to write a return to supply function first
+    # This is most likely broken as hell right now
+
     cardtype = ACTION | ATTACK
     cost = (3, 0)
     name = "Ambassador"
@@ -439,6 +439,7 @@ class Ambassador(card):
         
 
     def attack_handler(self, game, attacked_player):
+        game.take_card_from_pile(attacked_player, game.get_pile(cardType), safe=True)
         return True
 
     def handler(self, game, player, result):
@@ -452,7 +453,7 @@ class Ambassador(card):
         def returnCopies(_, ap, result):
             while(result > 0):
                 retunCard = player.hand.get_card(copies.next())
-                player.move_card_to_pile(returnCard, cardType)
+                player.move_card_to_pile(returnCard, game.get_pile(cardType))
 
         card = player.hand.get_card(result[0])
         #player.move_card_to_pile(card, player.drawpile)

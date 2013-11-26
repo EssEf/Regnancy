@@ -26,6 +26,9 @@ class Player(object):
         self.durations = Pile()
         self.drawpile = Pile()
         self.discardpile = Pile()
+        self.island = Pile()
+        self.nativeVillage = Pile()
+        self.pirateShip = 0
 
     def move_card_to_pile(self, card, target_pile):
         """Moves a card from the draw pile, the discard pile, or the hand to another target pile"""

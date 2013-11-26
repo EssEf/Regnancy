@@ -3,7 +3,7 @@
 
 from game.cards.card import Card, ACTION, ATTACK, DURATION, VICTORY
 from game.cards.common import Curse, Copper, Gold
-
+from game.gametrigger import T_ATTACK
 
 class Ghostship(Card):
 
@@ -43,7 +43,7 @@ class Wharf(Card):
     def __init__(self):
         Card.__init__(self)
 
-    def action_step(self, game, player):
+v    def action_step(self, game, player):
         game.draw_card(count=2)
         player.buys += 1
         game.resolved(self)
@@ -401,3 +401,164 @@ class FishingVillage(Card):
         player.money += 1
 
 
+class Lighthouse(Card):
+    # I don't know if I'm handling the reaction part of it properly 
+    cardtype = ACTION | DURATION 
+    cost = (2, 0)
+    name = "Lighthouse"
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        player.actions += 1
+        player.money += 1
+        game.resolved(self)
+
+    def handle_trigger(self, trigger):
+        if trigger == T_ATTACK:
+            return True
+
+    def begin_step(self, game, player):
+        player.money += 1
+
+
+class Ambassador(card):
+    # This is most likely broken as hell right now
+
+    cardtype = ACTION | ATTACK
+    cost = (3, 0)
+    name = "Ambassador"
+    cardType = None
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.let_pick_from_hand(self, 'Pick a card to reveal')
+        
+
+    def attack_handler(self, game, attacked_player):
+        game.take_card_from_pile(attacked_player, game.get_pile(cardType), safe=True)
+        return True
+
+    def handler(self, game, player, result):
+        if not player.hand:
+            return True
+        if len(result) != 1:
+            game.whisper("You have to choose one card")
+            return False
+
+
+        def returnCopies(_, ap, result):
+            while(result > 0):
+                retunCard = player.hand.get_card(copies.next())
+                player.move_card_to_pile(returnCard, game.get_pile(cardType))
+                #remove card from deck?
+
+        card = player.hand.get_card(result[0])
+        #player.move_card_to_pile(card, player.drawpile)
+        game.yell("%s reveals %s" % player.name, card)
+        cardType = card.__class__
+        numCopies = len([c for c in player.hand if c.name == card.name])
+        copies = (c for c in player.hand if c.name == card.name)
+        game.ask(self, "Return how many copies?", range(min(3, numCopies+1)),
+                 returnCopies)
+        game.attack(self, self.attack_handler, expect_answer=False)
+        return True
+
+class PirateShip(card):
+    
+    cardtype = ACTION | ATTACK
+    cost = (4, 0)
+    name = "Pirate Ship"
+
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.ask(self, "Attack players or gain %i money?" % player.pirateShip,
+                 ["Attack", "+" +str(player.pirateShip) + " money"], handler)
+
+    def attack_handler(self, game, attacked_player, result):
+        (self.revealed)[attacked_player.id] = (game.reveal_top_card(attacked_player),
+                game.reveal_top_card(attacked_player))
+        return True
+
+    def handler(self, game, player, result):
+        if result == "Attack":
+            self.revealed = {}
+            game.attack(self, self.attack_handler, expect_answer=False,
+                        on_restore_callback=self.handler2)
+
+    def handler2(self, game, player):
+        gen = [(game.get_player_by_id(pid), (self.revealed)[pid]) for pid in
+               self.revealed]
+        trashedCard = False
+
+        def do_pirateShip(*args, **kwargs):
+            try:
+                (p, (card1, card2)) = gen.pop()
+
+                def handle_answer(_, ap, result):
+                    if result == "Do nothing":
+                        return True
+
+                    (action, cardname) = result.split(' ')
+
+                    card = (c for c in (card1, card2) if c.name ==
+                        cardname).next()
+
+                    if card1 and not card1 is card:
+                        p.discardpile.add(card1)
+                    if card2 and not card2 is card:
+                        p.discardpile.add(card2)
+
+                    if action == 'Trash':
+                        game.trash_card(p, card)
+                    return True
+
+                answers = []
+                for card in (card1, card2):
+                    if card and card.cardtype & TREASURE:
+                        answers.append("Trash " + card.name)
+                        trashedCard = True
+                if not answers:
+                    answers.append("Do nothing")
+
+                game.ask(self, 'Attack against %s' % p.name, answers,
+                         handle_answer, do_thief)
+            except IndexError:
+                return True
+
+        do_pirateShip()
+        if trashedCard:
+            player.pirateShip += 1
+
+def Island(card):
+
+    cardtype = ACTION | VICTORY
+    cost = (4, 0)
+    name = "Island"
+
+    def __init__(self):
+        Card.__init__(self)
+
+    def action_step(self, game, player):
+        game.let_pick_from_hand(self, 'Pick a card to set aside')
+
+    def handler(self, game, player, result):
+        if not player.hand:
+            return True
+        if len(result) != 1:
+            game.whisper("You have to choose one card")
+            return False
+        card = (card for card in player.hand if card.id in result).next()
+        player.move_card_to_pile(self, player.island)
+        player.move_card_to_pile(card, player.island)
+        game.resolved(self)
+        return True
+
+    def end_step(self, game, player):
+        player.score += 2

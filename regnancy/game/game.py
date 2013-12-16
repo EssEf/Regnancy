@@ -20,6 +20,7 @@ from gametrigger import T_ATTACK, T_GAIN
 from triggerinfo import TriggerInfo
 from infotoken import InfoToken
 from pile import Pile
+from pile import KingdomPile
 import logging
 from framework.event import ChangePhaseEvent, ChangeSubPhaseEvent,\
     ChangePilesEvent, ChangeBoardEvent, ChangeHandEvent, MessageEvent,\

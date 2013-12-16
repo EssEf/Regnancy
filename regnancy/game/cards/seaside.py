@@ -43,7 +43,7 @@ class Wharf(Card):
     def __init__(self):
         Card.__init__(self)
 
-v    def action_step(self, game, player):
+    def action_step(self, game, player):
         game.draw_card(count=2)
         player.buys += 1
         game.resolved(self)
@@ -423,7 +423,7 @@ class Lighthouse(Card):
         player.money += 1
 
 
-class Ambassador(card):
+class Ambassador(Card):
     # This is most likely broken as hell right now
 
     cardtype = ACTION | ATTACK
@@ -467,7 +467,7 @@ class Ambassador(card):
         game.attack(self, self.attack_handler, expect_answer=False)
         return True
 
-class PirateShip(card):
+class PirateShip(Card):
     
     cardtype = ACTION | ATTACK
     cost = (4, 0)
@@ -536,7 +536,7 @@ class PirateShip(card):
         if trashedCard:
             player.pirateShip += 1
 
-def Island(card):
+def Island(Card):
 
     cardtype = ACTION | VICTORY
     cost = (4, 0)

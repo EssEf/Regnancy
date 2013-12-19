@@ -376,6 +376,8 @@ class Contraband(Card):
     self.named_card = ''
 
   def pick_handler(self):
+    """Put in the return to deal with compilation"""
+    return
 
   def buy_step(self, game, player):
     player.money += 3
@@ -385,7 +387,8 @@ class Contraband(Card):
 
     player_filter = lambda p: p == game.next_player()
 
-    g = game.ask_all_players(
+    #g = game.ask_all_players(
+    #fix the above line so it compiles
 
     def mod(coins, potions, card):
       if card.name == self.named_card:
